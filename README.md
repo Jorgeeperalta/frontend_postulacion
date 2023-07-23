@@ -20,6 +20,13 @@ npm run build
 yarn test:e2e
 ```
 ### version de node.js
+
 v13.14.0
+
+### Para uso de backend local cambiar host en la carpeta store url_api
+
+ url_api:'http://jorgeperalta-001-site4.itempurl.com/backend_postulacion/'
+         'http://localhost/backend_postulacion/'
+
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
