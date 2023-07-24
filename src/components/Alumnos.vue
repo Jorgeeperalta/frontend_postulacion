@@ -404,6 +404,7 @@ export default {
     ],
     porcentajeAprobado: 70,
     anio_carrera: "",
+    salida:'falso',
     alumnos: [],
     anio_sigiente: 1,
     editedIndex: -1,
@@ -486,7 +487,7 @@ export default {
         // Asignar las materias correspondientes al primer año de la carrera
         this.valida_insertar = true;
       } else if (cantidad_de_notas > 0 && cantidad_de_notas < 10) {
-        this.valida_insertar = false;
+        this.valida_insertar = true;
         // Calcular el total de materias del año actual del estudiante
         const totalMateriasAnioActual = cantidad_de_notas;
         // Calcular el total de materias aprobadas del año actual del estudiante
@@ -583,6 +584,34 @@ export default {
       }
     },
     insertar_nota(pk) {
+      const parcial1 = parseFloat(this.editedItem_Notas.parcial_1);
+      const parcial2 = parseFloat(this.editedItem_Notas.parcial_2);
+      const parcial3 = parseFloat(this.editedItem_Notas.parcial_3);
+      const parcial4 = parseFloat(this.editedItem_Notas.parcial_4);
+
+      if (
+        !isNaN(parcial1) &&
+        !isNaN(parcial2) &&
+        !isNaN(parcial3) &&
+        !isNaN(parcial4)
+      ) {
+        if (parcial1 >= 1 && parcial2 >= 1 && parcial3 >= 1 && parcial4 >= 1) {
+          this.editedItem_Notas.final =
+            (parcial1 + parcial2 + parcial3 + parcial4) / 4;
+          if (this.editedItem_Notas.final >= 4) {
+            var aux = "";
+            aux = this.editedItem_Notas.final;
+            this.editedItem_Notas.final = aux.toString();
+          } else if (this.editedItem_Notas.final < 4) {
+            this.editedItem_Notas.final = "2";
+          }
+        } else {
+          this.editedItem_Notas.final = "0"; // O cualquier otro valor predeterminado
+        }
+      } else {
+        this.editedItem_Notas.final = "0"; // O cualquier otro valor predeterminado
+      }
+
       var obj = this;
       var myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
@@ -642,8 +671,45 @@ export default {
         .then((result) => obj.asignarMaterias(result))
         .catch((error) => console.log("error", error));
     },
+    comprueba_inscripcion() {
+     var obj= this
+      var myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+
+      var raw = JSON.stringify({
+        opcion: "buscar_por_estudiante_materia",
+        id_estudiante: this.$store.state.pk_estudiante,
+        id_materia: this.editedItem_Notas.materia_id,
+      });
+
+      var requestOptions = {
+        method: "POST",
+        headers: myHeaders,
+        body: raw,
+        redirect: "follow",
+      };
+
+      var promise = Promise.race([
+        fetch(
+          `${this.$store.state.url_api}inscripciones.php`,
+          requestOptions
+        ).then((response) => response.json()),
+        new Promise((resolve, reject) =>
+          setTimeout(() => reject(new Error("Timeout")), 520000)
+        ),
+      ]);
+
+      promise.then((result) => console.log(result));
+      promise.then((result) => (obj.salida = result)),
+        promise.catch((error) => console.log(error));
+
+     
+    },
     insertar_inscripciones() {
+      this.salida = this.salida
       if (this.valida_insertar) {
+       
+        if(this.salida =='falso'){
         var obj = this;
         var myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
@@ -675,6 +741,7 @@ export default {
         promise.then((result) => console.log(result));
         // promise.then((result) => obj.swal_get(result))
         promise.catch((error) => console.log(error));
+      }else{(alert('Ya se inscribio en esta materia'))}
       } else {
         alert("Ya tiene todas las materias asignadas para este año");
       }
@@ -683,7 +750,9 @@ export default {
       const materiaEncontrada = this.materias.find(
         (materia) => materia.id === materiaId
       );
+      this.comprueba_inscripcion()
       return materiaEncontrada.anio_carrera || null;
+      
     },
 
     obtener_materias() {
